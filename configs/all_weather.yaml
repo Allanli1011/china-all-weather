@@ -1,0 +1,277 @@
+# 全天候期货策略配置
+# 品种元数据、ERC参数、再平衡阈值
+
+# ─────────────────────────────────────────────────
+# 品种宇宙
+# ─────────────────────────────────────────────────
+universe:
+
+  # 股票类（equity）
+  equity:
+    IF:
+      name: "沪深300期货"
+      exchange: "CFFEX"
+      symbol_sina: "IF0"
+      multiplier: 300
+      margin_rate: 0.12
+      tick_size: 0.2
+      fee_rate: 0.000023      # 双边合计，万2.3
+      slippage_ticks: 1
+      listed_date: "20100416"
+
+    IC:
+      name: "中证500期货"
+      exchange: "CFFEX"
+      symbol_sina: "IC0"
+      multiplier: 200
+      margin_rate: 0.12
+      tick_size: 0.2
+      fee_rate: 0.000023
+      slippage_ticks: 1
+      listed_date: "20150416"
+
+  # 债券类（bond）
+  bond:
+    T:
+      name: "10年期国债期货"
+      exchange: "CFFEX"
+      symbol_sina: "T0"
+      multiplier: 10000
+      margin_rate: 0.02
+      tick_size: 0.005
+      fee_rate: 0.000005       # 万0.5，国债手续费极低
+      slippage_ticks: 1
+      listed_date: "20130906"
+
+    TF:
+      name: "5年期国债期货"
+      exchange: "CFFEX"
+      symbol_sina: "TF0"
+      multiplier: 10000
+      margin_rate: 0.01
+      tick_size: 0.005
+      fee_rate: 0.000005
+      slippage_ticks: 1
+      listed_date: "20130906"
+
+  # 黄金类（gold）
+  gold:
+    AU:
+      name: "黄金期货"
+      exchange: "SHFE"
+      symbol_sina: "AU0"
+      multiplier: 1000
+      margin_rate: 0.07
+      tick_size: 0.02
+      fee_rate: 0.00002        # 万2
+      slippage_ticks: 1
+      listed_date: "20080109"
+
+  # 工业金属类（industrial_metal）
+  industrial_metal:
+    CU:
+      name: "铜"
+      exchange: "SHFE"
+      symbol_sina: "CU0"
+      multiplier: 5
+      margin_rate: 0.10
+      tick_size: 10.0
+      fee_rate: 0.00005
+      slippage_ticks: 1
+      listed_date: "19950517"
+
+    AL:
+      name: "铝"
+      exchange: "SHFE"
+      symbol_sina: "AL0"
+      multiplier: 5
+      margin_rate: 0.10
+      tick_size: 5.0
+      fee_rate: 0.00005
+      slippage_ticks: 1
+      listed_date: "19950517"
+
+    ZN:
+      name: "锌"
+      exchange: "SHFE"
+      symbol_sina: "ZN0"
+      multiplier: 5
+      margin_rate: 0.10
+      tick_size: 5.0
+      fee_rate: 0.00005
+      slippage_ticks: 1
+      listed_date: "20070326"
+
+  # 黑色金属类（ferrous）
+  ferrous:
+    I:
+      name: "铁矿石"
+      exchange: "DCE"
+      symbol_sina: "I0"
+      multiplier: 100
+      margin_rate: 0.09
+      tick_size: 0.5
+      fee_rate: 0.00006
+      slippage_ticks: 1
+      listed_date: "20131018"
+
+    J:
+      name: "焦炭"
+      exchange: "DCE"
+      symbol_sina: "J0"
+      multiplier: 100
+      margin_rate: 0.10
+      tick_size: 0.5
+      fee_rate: 0.00006
+      slippage_ticks: 1
+      listed_date: "20110415"
+
+    RB:
+      name: "螺纹钢"
+      exchange: "SHFE"
+      symbol_sina: "RB0"
+      multiplier: 10
+      margin_rate: 0.09
+      tick_size: 1.0
+      fee_rate: 0.00005
+      slippage_ticks: 1
+      listed_date: "20090327"
+
+  # 能源类（energy）
+  energy:
+    SC:
+      name: "原油"
+      exchange: "INE"
+      symbol_sina: "SC0"
+      multiplier: 1000
+      margin_rate: 0.10
+      tick_size: 0.1
+      fee_rate: 0.00002
+      slippage_ticks: 1
+      listed_date: "20180326"
+
+  # 农产品类（agriculture）
+  agriculture:
+    M:
+      name: "豆粕"
+      exchange: "DCE"
+      symbol_sina: "M0"
+      multiplier: 10
+      margin_rate: 0.10
+      tick_size: 1.0
+      fee_rate: 0.00006
+      slippage_ticks: 1
+      listed_date: "20000717"
+
+    Y:
+      name: "豆油"
+      exchange: "DCE"
+      symbol_sina: "Y0"
+      multiplier: 10
+      margin_rate: 0.10
+      tick_size: 2.0
+      fee_rate: 0.00005
+      slippage_ticks: 1
+      listed_date: "20060109"
+
+    CF:
+      name: "棉花"
+      exchange: "CZCE"
+      symbol_sina: "CF0"
+      multiplier: 5
+      margin_rate: 0.10
+      tick_size: 5.0
+      fee_rate: 0.00006
+      slippage_ticks: 1
+      listed_date: "20040601"
+
+    SR:
+      name: "白糖"
+      exchange: "CZCE"
+      symbol_sina: "SR0"
+      multiplier: 10
+      margin_rate: 0.10
+      tick_size: 1.0
+      fee_rate: 0.00005
+      slippage_ticks: 1
+      listed_date: "20060106"
+
+    C:
+      name: "玉米"
+      exchange: "DCE"
+      symbol_sina: "C0"
+      multiplier: 10
+      margin_rate: 0.10
+      tick_size: 1.0
+      fee_rate: 0.00005
+      slippage_ticks: 1
+      listed_date: "20040922"
+
+# ─────────────────────────────────────────────────
+# 数据配置
+# ─────────────────────────────────────────────────
+data:
+  start_date: "20150101"          # 统一起始日期（T/TF 2015年后流动性稳定）
+  cache_compression: "snappy"     # Parquet 压缩格式
+  fetch_retries: 3                # AKShare 请求失败重试次数
+  fetch_delay_seconds: 0.5        # 请求间隔，避免触发限流
+
+# ─────────────────────────────────────────────────
+# 风险平价参数
+# ─────────────────────────────────────────────────
+risk_parity:
+  vol_window: 60                  # 滚动协方差估计窗口（交易日）
+  vol_min_periods: 20             # 最少有效观测数（否则该品种权重为0）
+  min_history_days: 90            # 品种进入组合所需最少历史天数（含冷启动缓冲）
+  use_ledoit_wolf: true           # 是否使用 Ledoit-Wolf 协方差收缩估计
+  erc_max_iter: 1000              # ERC 优化最大迭代次数
+  erc_tol: 1.0e-10                # ERC 优化收敛容忍度
+  min_weight: 0.005               # 单品种最低权重（防止数值零）
+  max_weight: 0.40                # 单品种最高权重（集中度上限）
+
+# ─────────────────────────────────────────────────
+# 展期处理
+# ─────────────────────────────────────────────────
+rollover:
+  # 主力合约代码历史的构建策略：
+  #   "auto"  — 优先检查 AKShare 返回数据是否含合约代码字段，无则回退到 fallback
+  #   "price" — 仅用价格跳幅检测（最简单，精度略低，保留作测试对比）
+  detection_method: "auto"
+  price_jump_threshold: 0.03      # fallback 模式：单日涨跌超过此幅度视为潜在展期
+
+# ─────────────────────────────────────────────────
+# 回测参数
+# ─────────────────────────────────────────────────
+backtest:
+  initial_capital: 10000000       # 初始资金（1000万元）
+  rebalance_threshold: 0.10       # 触发再平衡的 L1 权重偏差阈值（默认10%，
+                                  # 当 per_class_thresholds 启用时作为兜底阈值）
+  execution_lag_days: 1           # 信号日后第 N 个交易日执行（1=T+1日开盘）
+  benchmark_symbol: "IF0"         # 基准（沪深300期货主力连续）
+  start_date: "20150101"          # 回测起始日
+  end_date: null                  # null = 使用数据最新日期
+
+  # ── 目标波动率杠杆 ────────────────────────────────────────────────────
+  leverage_enabled: false         # 是否启用目标波动率杠杆
+  target_vol: 0.10                # 目标年化组合波动率（10%）
+  max_leverage: 3.0               # 最大杠杆倍数上限
+  financing_rate: 0.02            # 年化融资成本（借款利率，默认2%）
+  leverage_vol_window: 60         # 计算当前组合波动率的滚动窗口（交易日）
+
+  # ── 分类再平衡阈值 ────────────────────────────────────────────────────
+  # 若设置此项，各资产大类使用独立阈值，任意一类超标即触发全组合再平衡
+  # 注释掉此节则退回到全局 rebalance_threshold
+  per_class_thresholds:
+    enabled: false                # 是否启用分类阈值
+    equity: 0.15                  # 股票类（IF/IC）：波动小，少动
+    bond: 0.20                    # 债券类（T/TF）：最稳定，最少动
+    gold: 0.15                    # 黄金类（AU）
+    commodity: 0.08               # 商品类：高波动，密集捕捉均值回归
+
+# ─────────────────────────────────────────────────
+# 输出配置
+# ─────────────────────────────────────────────────
+output:
+  reports_dir: "reports"
+  save_weights_history: true
+  save_rebalance_log: true

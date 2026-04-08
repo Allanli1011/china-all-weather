@@ -1,0 +1,20 @@
+# 数据与报告（体积大，不入库）
+data/
+reports/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# 监控状态（包含实时仓位，不入库）
+data/monitor_state.json
