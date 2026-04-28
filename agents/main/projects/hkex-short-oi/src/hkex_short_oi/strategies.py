@@ -2,7 +2,50 @@ from __future__ import annotations
 
 from typing import Iterable, List, Optional, Dict
 
-from .models import FeatureRow, StrategySignal, PriceBar
+from .models import FeatureRow, StrategySignal, PriceBar, MarketFeatureRow
+
+def generate_market_signals(
+    market_features: Iterable[MarketFeatureRow],
+    index_code: str = "^HSI",
+) -> List[StrategySignal]:
+    signals: List[StrategySignal] = []
+    
+    for row in market_features:
+        z20 = row.short_ratio_z.get(20)
+        
+        if z20 is not None and z20 >= 1.5:
+            signals.append(
+                StrategySignal(
+                    trade_date=row.trade_date,
+                    code=index_code,
+                    name=row.market + " Market",
+                    strategy="market_heavily_shorted_long",
+                    direction="long",
+                    score=min(5.0, z20),
+                    reasons=[
+                        "Market-wide short ratio is highly elevated (Z > 1.5).",
+                        "Testing if this is a contrarian buy signal."
+                    ],
+                    required_confirmation=[]
+                )
+            )
+            signals.append(
+                StrategySignal(
+                    trade_date=row.trade_date,
+                    code=index_code,
+                    name=row.market + " Market",
+                    strategy="market_heavily_shorted_short",
+                    direction="short",
+                    score=min(5.0, z20),
+                    reasons=[
+                        "Market-wide short ratio is highly elevated (Z > 1.5).",
+                        "Testing if this signals systemic risk/continuation."
+                    ],
+                    required_confirmation=[]
+                )
+            )
+            
+    return signals
 
 
 def generate_signals(

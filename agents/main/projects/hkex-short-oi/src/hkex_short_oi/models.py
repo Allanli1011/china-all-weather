@@ -64,6 +64,17 @@ class FeatureRow:
 
 
 @dataclass(frozen=True)
+class MarketFeatureRow:
+    trade_date: date
+    market: str
+    total_short_value: float
+    total_market_value: float
+    short_ratio: float
+    short_ratio_z: Dict[int, Optional[float]]
+    short_ratio_percentile: Dict[int, Optional[float]]
+
+
+@dataclass(frozen=True)
 class StrategySignal:
     trade_date: date
     code: str

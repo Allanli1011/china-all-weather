@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Iterable, List
 
 from .backtest import run_event_backtest
-from .features import build_features
+from .features import build_features, build_market_features
 from .fetchers import CurlTextClient, FetchError, HKEXFetcher, HTTPTextClient, SFCFetcher, YahooPriceFetcher
 from .models import ShortTurnoverReport
 from .parsers import (
@@ -318,9 +318,15 @@ def _run_backtest(args) -> int:
         print("No short-turnover records found for backtest.")
         return 1
     features = build_features(records)
+    market_features = build_market_features(records)
+    
     if signal_start:
         features = [row for row in features if row.record.trade_date >= signal_start]
+        market_features = [row for row in market_features if row.trade_date >= signal_start]
+    
     features = [row for row in features if row.record.trade_date <= signal_end]
+    market_features = [row for row in market_features if row.trade_date <= signal_end]
+    
     price_bars = store.load_price_bars(end_date=signal_end + timedelta(days=45), source="yahoo")
     horizons = [int(item.strip()) for item in args.horizons.split(",") if item.strip()]
 
@@ -329,6 +335,8 @@ def _run_backtest(args) -> int:
         price_bars=price_bars,
         horizons=horizons,
         min_short_value=args.min_short_value,
+        market_features=market_features,
+        market_index_code="03033",  # Using CSOP Hang Seng Tech ETF as default proxy
     )
     report_path = _write_backtest_report(result, args.report_dir, signal_end)
     print(f"Backtest events: {len(result.events)}")
@@ -372,6 +380,8 @@ def _resolve_price_codes(store: ShortTurnoverStore, codes_arg: str, top_n: int) 
 
 
 def _normalize_cli_code(value: str) -> str:
+    if value.startswith("^") or value.endswith(".HK"):
+        return value.upper()
     digits = "".join(ch for ch in value if ch.isdigit())
     return digits.zfill(5)
 

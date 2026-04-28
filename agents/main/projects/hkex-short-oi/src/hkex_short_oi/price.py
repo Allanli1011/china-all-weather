@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import urllib.parse
 from datetime import date, datetime, time, timezone
 from typing import List, Optional
 
@@ -9,6 +10,8 @@ from .parsers import ParseError
 
 
 def yahoo_symbol_from_hk_code(code: str) -> str:
+    if code.startswith("^") or code.endswith(".HK"):
+        return code
     digits = "".join(ch for ch in code if ch.isdigit())
     if not digits:
         raise ValueError(f"Invalid HK code: {code}")
@@ -17,11 +20,12 @@ def yahoo_symbol_from_hk_code(code: str) -> str:
 
 def yahoo_chart_url(code: str, start_date: date, end_date: date) -> str:
     symbol = yahoo_symbol_from_hk_code(code)
+    encoded_symbol = urllib.parse.quote(symbol)
     period1 = _to_epoch(start_date)
     # Yahoo period2 is exclusive; add one day so end_date is included.
     period2 = _to_epoch(date.fromordinal(end_date.toordinal() + 1))
     return (
-        f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded_symbol}"
         f"?period1={period1}&period2={period2}&interval=1d&events=history"
     )
 

@@ -4,7 +4,7 @@ from collections import defaultdict
 from math import sqrt
 from typing import Dict, Iterable, List, Optional, Sequence
 
-from .models import FeatureRow, ShortTurnoverRecord
+from .models import FeatureRow, ShortTurnoverRecord, MarketFeatureRow
 
 
 def build_features(
@@ -63,6 +63,63 @@ def build_features(
                 previous_ratios.append(record.short_ratio)
 
     features.sort(key=lambda item: (item.record.trade_date, item.record.market, item.record.session, item.record.code))
+    return features
+
+
+def build_market_features(
+    records: Iterable[ShortTurnoverRecord],
+    short_windows: Sequence[int] = (20, 60),
+) -> List[MarketFeatureRow]:
+    daily_aggregates: Dict[tuple, dict] = defaultdict(lambda: {"short": 0.0, "total": 0.0})
+    for record in records:
+        if record.is_non_hkd:
+            continue
+        key = (record.trade_date, record.market)
+        daily_aggregates[key]["short"] += record.short_value
+        daily_aggregates[key]["total"] += (record.total_value or 0.0)
+
+    market_groups: Dict[str, List[dict]] = defaultdict(list)
+    for (trade_date, market), values in daily_aggregates.items():
+        if values["total"] > 0:
+            ratio = values["short"] / values["total"]
+        else:
+            ratio = 0.0
+        market_groups[market].append({
+            "trade_date": trade_date,
+            "short": values["short"],
+            "total": values["total"],
+            "ratio": ratio,
+        })
+
+    features: List[MarketFeatureRow] = []
+    for market, group_records in market_groups.items():
+        group_records.sort(key=lambda item: item["trade_date"])
+        previous_ratios: List[float] = []
+
+        for record in group_records:
+            short_ratio_z: Dict[int, Optional[float]] = {}
+            short_ratio_percentile: Dict[int, Optional[float]] = {}
+
+            for window in short_windows:
+                ratio_window = previous_ratios[-window:]
+                short_ratio_z[window] = _zscore(record["ratio"], ratio_window)
+                short_ratio_percentile[window] = _percentile_rank(record["ratio"], ratio_window)
+
+            features.append(
+                MarketFeatureRow(
+                    trade_date=record["trade_date"],
+                    market=market,
+                    total_short_value=record["short"],
+                    total_market_value=record["total"],
+                    short_ratio=record["ratio"],
+                    short_ratio_z=short_ratio_z,
+                    short_ratio_percentile=short_ratio_percentile,
+                )
+            )
+
+            previous_ratios.append(record["ratio"])
+
+    features.sort(key=lambda item: (item.trade_date, item.market))
     return features
 
 

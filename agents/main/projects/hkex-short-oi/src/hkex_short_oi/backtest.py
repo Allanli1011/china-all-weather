@@ -3,8 +3,8 @@ from __future__ import annotations
 from statistics import median
 from typing import Dict, Iterable, List, Sequence, Optional
 
-from .models import FeatureRow, PriceBar, StrategyBacktestResult, StrategyBacktestStats
-from .strategies import generate_signals
+from .models import FeatureRow, PriceBar, StrategyBacktestResult, StrategyBacktestStats, MarketFeatureRow, StrategySignal
+from .strategies import generate_signals, generate_market_signals
 
 
 def run_event_backtest(
@@ -13,6 +13,8 @@ def run_event_backtest(
     horizons: Sequence[int] = (1, 3, 5, 10),
     min_short_value: float = 10_000_000,
     round_trip_cost: float = 0.003,
+    market_features: Optional[Iterable[MarketFeatureRow]] = None,
+    market_index_code: str = "^HSI",
 ) -> StrategyBacktestResult:
     prices_by_code: Dict[str, List[PriceBar]] = {}
     for bar in price_bars:
@@ -21,59 +23,21 @@ def run_event_backtest(
         bars.sort(key=lambda item: item.trade_date)
 
     events = []
+    
+    # Evaluate individual stock signals
     for feature in features:
         signals = generate_signals([feature], prices_by_code=prices_by_code, min_short_value=min_short_value)
         if not signals:
             continue
-        bars = prices_by_code.get(feature.record.code, [])
-        signal_idx = _bar_index_on_or_after(bars, feature.record.trade_date)
-        if signal_idx is None:
-            continue
-        entry_idx = signal_idx + 1
-        if entry_idx >= len(bars):
-            continue
-        entry_bar = bars[entry_idx]
-        for signal in signals:
-            for horizon in horizons:
-                exit_idx = entry_idx + horizon - 1
-                if exit_idx >= len(bars):
-                    continue
-                exit_bar = bars[exit_idx]
-                
-                is_short = "short" in signal.direction
-                raw_return = exit_bar.close / entry_bar.open - 1
-                strategy_return = -raw_return if is_short else raw_return
-                
-                # Calculate drawdown
-                horizon_bars = bars[entry_idx:exit_idx+1]
-                if is_short:
-                    worst_price = max(b.high for b in horizon_bars)
-                    worst_raw_return = worst_price / entry_bar.open - 1
-                    drawdown = min(0.0, -worst_raw_return)
-                else:
-                    worst_price = min(b.low for b in horizon_bars)
-                    worst_raw_return = worst_price / entry_bar.open - 1
-                    drawdown = min(0.0, worst_raw_return)
-                
-                events.append(
-                    {
-                        "signal_date": feature.record.trade_date,
-                        "entry_date": entry_bar.trade_date,
-                        "exit_date": exit_bar.trade_date,
-                        "code": signal.code,
-                        "name": signal.name,
-                        "strategy": signal.strategy,
-                        "direction": signal.direction,
-                        "horizon": horizon,
-                        "entry_price": entry_bar.open,
-                        "exit_price": exit_bar.close,
-                        "raw_return": raw_return,
-                        "strategy_return": strategy_return,
-                        "net_return": strategy_return - round_trip_cost,
-                        "drawdown": drawdown,
-                        "score": signal.score,
-                    }
-                )
+        _process_signals(signals, prices_by_code, horizons, round_trip_cost, events)
+        
+    # Evaluate market-wide sentiment signals if provided
+    if market_features:
+        m_signals = generate_market_signals(market_features, index_code=market_index_code)
+        if m_signals:
+            # We don't apply the individual stock round-trip cost to the index theoretically,
+            # but we can apply it for consistency or use a smaller cost. For now keep consistent.
+            _process_signals(m_signals, prices_by_code, horizons, round_trip_cost, events)
 
     by_strategy: Dict[str, Dict[int, List[dict]]] = {}
     for event in events:
@@ -89,6 +53,65 @@ def run_event_backtest(
             stats[strategy][horizon] = _stats(h_events)
 
     return StrategyBacktestResult(by_strategy=stats, events=events)
+
+
+def _process_signals(
+    signals: Iterable[StrategySignal],
+    prices_by_code: Dict[str, List[PriceBar]],
+    horizons: Sequence[int],
+    round_trip_cost: float,
+    events: List[dict]
+) -> None:
+    for signal in signals:
+        bars = prices_by_code.get(signal.code, [])
+        signal_idx = _bar_index_on_or_after(bars, signal.trade_date)
+        if signal_idx is None:
+            continue
+        entry_idx = signal_idx + 1
+        if entry_idx >= len(bars):
+            continue
+        entry_bar = bars[entry_idx]
+        
+        for horizon in horizons:
+            exit_idx = entry_idx + horizon - 1
+            if exit_idx >= len(bars):
+                continue
+            exit_bar = bars[exit_idx]
+            
+            is_short = "short" in signal.direction
+            raw_return = exit_bar.close / entry_bar.open - 1
+            strategy_return = -raw_return if is_short else raw_return
+            
+            # Calculate drawdown
+            horizon_bars = bars[entry_idx:exit_idx+1]
+            if is_short:
+                worst_price = max(b.high for b in horizon_bars)
+                worst_raw_return = worst_price / entry_bar.open - 1
+                drawdown = min(0.0, -worst_raw_return)
+            else:
+                worst_price = min(b.low for b in horizon_bars)
+                worst_raw_return = worst_price / entry_bar.open - 1
+                drawdown = min(0.0, worst_raw_return)
+            
+            events.append(
+                {
+                    "signal_date": signal.trade_date,
+                    "entry_date": entry_bar.trade_date,
+                    "exit_date": exit_bar.trade_date,
+                    "code": signal.code,
+                    "name": signal.name,
+                    "strategy": signal.strategy,
+                    "direction": signal.direction,
+                    "horizon": horizon,
+                    "entry_price": entry_bar.open,
+                    "exit_price": exit_bar.close,
+                    "raw_return": raw_return,
+                    "strategy_return": strategy_return,
+                    "net_return": strategy_return - round_trip_cost,
+                    "drawdown": drawdown,
+                    "score": signal.score,
+                }
+            )
 
 
 def _bar_index_on_or_after(bars: List[PriceBar], target_date) -> Optional[int]:
