@@ -18,3 +18,4 @@ venv/
 
 # 监控状态（包含实时仓位，不入库）
 data/monitor_state.json
+agents/main/projects/hkex-short-oi/
